@@ -1,5 +1,58 @@
 import { formatPct, normalizeDivisionName } from "./formatters.js";
 
+const TEAM_DIVISION_BY_NAME = new Map([
+  ["toros", "Zona Norte"],
+  ["charros", "Zona Norte"],
+  ["caliente", "Zona Norte"],
+  ["acereros", "Zona Norte"],
+  ["sultanes", "Zona Norte"],
+  ["rieleros", "Zona Norte"],
+  ["algodoneros", "Zona Norte"],
+  ["tecos", "Zona Norte"],
+  ["tecolotes", "Zona Norte"],
+  ["saraperos", "Zona Norte"],
+  ["dorados", "Zona Norte"],
+  ["diablos", "Zona Sur"],
+  ["diablos rojos", "Zona Sur"],
+  ["olmecas", "Zona Sur"],
+  ["guerreros", "Zona Sur"],
+  ["bravos", "Zona Sur"],
+  ["pericos", "Zona Sur"],
+  ["tigres", "Zona Sur"],
+  ["conspiradores", "Zona Sur"],
+  ["piratas", "Zona Sur"],
+  ["el aguila", "Zona Sur"],
+  ["leones", "Zona Sur"],
+]);
+
+const DIVISION_ORDER = ["Zona Norte", "Zona Sur"];
+
+function normalizeTeamKey(value = "") {
+  return String(value)
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function inferDivisionName(team = {}) {
+  const candidates = [team.teamName, team.clubName, team.name, team.abbreviation].filter(Boolean);
+
+  for (const candidate of candidates) {
+    const key = normalizeTeamKey(candidate);
+
+    for (const [teamName, divisionName] of TEAM_DIVISION_BY_NAME.entries()) {
+      if (key.includes(teamName)) {
+        return divisionName;
+      }
+    }
+  }
+
+  return "División";
+}
+
 function toNumber(value, fallback = 0) {
   const numeric = Number(value);
   return Number.isFinite(numeric) ? numeric : fallback;
@@ -82,7 +135,9 @@ function mapTeamRecord(teamRecord, standingsRecord) {
   const runsAllowed = toNumber(teamRecord.runsAllowed);
   const runDifferential = toNumber(teamRecord.runDifferential, runsScored - runsAllowed);
   const pct = getPct(wins, losses, teamRecord.winningPercentage);
-  const divisionName = normalizeDivisionName(standingsRecord.division?.name || standingsRecord.division?.nameShort);
+  const rawDivisionName = normalizeDivisionName(standingsRecord.division?.name || standingsRecord.division?.nameShort);
+  const fallbackDivisionName = inferDivisionName(teamRecord.team);
+  const divisionName = DIVISION_ORDER.includes(rawDivisionName) ? rawDivisionName : fallbackDivisionName;
   const lastTen = mapSplit(teamRecord, "Últimos 10", ["lastTen", "last ten"]);
   const home = mapSplit(teamRecord, "Casa", ["home"]);
   const away = mapSplit(teamRecord, "Visitante", ["away"]);
@@ -163,7 +218,16 @@ export function mapStandings(apiData) {
         },
       ]),
     ).values(),
-  );
+  ).sort((divisionA, divisionB) => {
+    const orderA = DIVISION_ORDER.indexOf(divisionA.name);
+    const orderB = DIVISION_ORDER.indexOf(divisionB.name);
+
+    if (orderA !== -1 || orderB !== -1) {
+      return (orderA === -1 ? 99 : orderA) - (orderB === -1 ? 99 : orderB);
+    }
+
+    return divisionA.name.localeCompare(divisionB.name, "es");
+  });
 
   const leader = [...sortedTeams].sort((teamA, teamB) => {
     if (teamA.leagueRank && teamB.leagueRank) {

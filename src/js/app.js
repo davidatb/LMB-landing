@@ -36,12 +36,14 @@ const elements = {
   awayRecord: document.querySelector("#away-record"),
   awayPct: document.querySelector("#away-pct"),
   splitBars: document.querySelector("#split-bars"),
+  divisionPulse: document.querySelector("#division-pulse"),
+  leaderComparison: document.querySelector("#leader-comparison"),
   summaryList: document.querySelector("#summary-list"),
 };
 
 const state = {
   standings: null,
-  selectedDivision: "all",
+  selectedDivision: "Zona Norte",
   selectedTeamId: null,
 };
 
@@ -78,10 +80,6 @@ function getVisibleTeams() {
     return [];
   }
 
-  if (state.selectedDivision === "all") {
-    return state.standings.teams;
-  }
-
   return state.standings.teams.filter((team) => team.divisionName === state.selectedDivision);
 }
 
@@ -95,15 +93,8 @@ function getSelectedTeam() {
 
 function renderDivisionToggle() {
   const divisions = state.standings?.divisions || [];
-  const buttons = [
-    {
-      id: "all",
-      name: "Todos",
-    },
-    ...divisions,
-  ];
 
-  elements.divisionToggle.innerHTML = buttons
+  elements.divisionToggle.innerHTML = divisions
     .map((division) => {
       const isActive = division.id === state.selectedDivision;
 
@@ -145,7 +136,8 @@ function renderTeamControls() {
           data-team-id="${escapeAttribute(team.id)}"
           aria-pressed="${isActive}"
         >
-          ${escapeHtml(`${rankLabel} ${team.shortName}`)}
+          <span class="team-chips__rank">${escapeHtml(rankLabel)}</span>
+          <span class="team-chips__name">${escapeHtml(team.shortName)}</span>
         </button>
       `;
     })
@@ -199,6 +191,133 @@ function renderBars(team) {
     .join("");
 
   animateBars(elements.splitBars);
+}
+
+function getDivisionTeams(team) {
+  return state.standings.teams
+    .filter((candidate) => candidate.divisionName === team.divisionName)
+    .sort((teamA, teamB) => {
+      if (teamA.divisionRank && teamB.divisionRank) {
+        return teamA.divisionRank - teamB.divisionRank;
+      }
+
+      return teamB.pct - teamA.pct;
+    });
+}
+
+function renderDivisionPulse(team) {
+  const divisionTeams = getDivisionTeams(team);
+
+  elements.divisionPulse.innerHTML = `
+    <div class="division-pulse__header" aria-hidden="true">
+      <span>Pos</span>
+      <span>Equipo</span>
+      <span>Récord</span>
+      <span>PCT</span>
+      <span>DIF</span>
+    </div>
+    ${divisionTeams
+      .map((candidate) => {
+        const isSelected = candidate.id === team.id;
+
+        return `
+          <button
+            class="division-pulse__row ${isSelected ? "is-selected" : ""}"
+            type="button"
+            data-team-id="${escapeAttribute(candidate.id)}"
+            aria-pressed="${isSelected}"
+          >
+            <span class="division-pulse__rank">#${escapeHtml(candidate.divisionRank || "—")}</span>
+            <span class="division-pulse__team">${escapeHtml(candidate.shortName)}</span>
+            <span>${escapeHtml(formatRecord(candidate.wins, candidate.losses))}</span>
+            <span>${escapeHtml(formatPct(candidate.pct))}</span>
+            <span class="${candidate.runDifferential < 0 ? "is-negative" : "is-positive"}">${escapeHtml(formatSignedNumber(candidate.runDifferential))}</span>
+          </button>
+        `;
+      })
+      .join("")}
+  `;
+}
+
+function getLastTenPct(team) {
+  if (!team.lastTen?.available) {
+    return 0;
+  }
+
+  const games = team.lastTen.wins + team.lastTen.losses;
+  return games > 0 ? team.lastTen.wins / games : 0;
+}
+
+function normalizeRunDiff(value, maxValue) {
+  if (!maxValue) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, Math.round((Math.max(0, value) / maxValue) * 100)));
+}
+
+function renderLeaderComparison(team) {
+  const divisionTeams = getDivisionTeams(team);
+  const leader = divisionTeams[0] || team;
+  const maxRunDiff = Math.max(1, ...divisionTeams.map((candidate) => Math.max(0, candidate.runDifferential)));
+  const teamLastTen = getLastTenPct(team);
+  const leaderLastTen = getLastTenPct(leader);
+  const metrics = [
+    {
+      label: "PCT",
+      teamValue: clampPercent(team.pct),
+      leaderValue: clampPercent(leader.pct),
+      teamLabel: formatPct(team.pct),
+      leaderLabel: formatPct(leader.pct),
+    },
+    {
+      label: "Diferencial",
+      teamValue: normalizeRunDiff(team.runDifferential, maxRunDiff),
+      leaderValue: normalizeRunDiff(leader.runDifferential, maxRunDiff),
+      teamLabel: formatSignedNumber(team.runDifferential),
+      leaderLabel: formatSignedNumber(leader.runDifferential),
+    },
+    {
+      label: "Últimos 10",
+      teamValue: clampPercent(teamLastTen),
+      leaderValue: clampPercent(leaderLastTen),
+      teamLabel: team.lastTen.available ? formatRecord(team.lastTen.wins, team.lastTen.losses) : "Sin dato",
+      leaderLabel: leader.lastTen.available ? formatRecord(leader.lastTen.wins, leader.lastTen.losses) : "Sin dato",
+    },
+  ];
+
+  const gamesBack = team.id === leader.id ? "Líder actual de la zona" : `${team.gamesBack} juegos detrás`;
+
+  elements.leaderComparison.innerHTML = `
+    <div class="leader-compare__headline">
+      <span>${escapeHtml(gamesBack)}</span>
+      <strong>${escapeHtml(team.shortName)} vs ${escapeHtml(leader.shortName)}</strong>
+    </div>
+    ${metrics
+      .map(
+        (metric) => `
+          <div class="compare-metric">
+            <div class="compare-metric__label">${escapeHtml(metric.label)}</div>
+            <div class="compare-metric__bars">
+              <span class="compare-metric__name">${escapeHtml(team.shortName)}</span>
+              <span class="compare-metric__track" aria-hidden="true">
+                <span class="compare-metric__fill" data-bar-value="${metric.teamValue}"></span>
+              </span>
+              <strong>${escapeHtml(metric.teamLabel)}</strong>
+
+              <span class="compare-metric__name is-leader">${escapeHtml(leader.shortName)}</span>
+              <span class="compare-metric__track" aria-hidden="true">
+                <span class="compare-metric__fill is-leader" data-bar-value="${metric.leaderValue}"></span>
+              </span>
+              <strong>${escapeHtml(metric.leaderLabel)}</strong>
+            </div>
+          </div>
+        `,
+      )
+      .join("")}
+  `;
+
+  animateBars(elements.leaderComparison);
 }
 
 function renderSummary(team) {
@@ -262,6 +381,8 @@ function renderTeamProfile() {
   elements.awayPct.textContent = team.away.available ? `PCT ${formatPct(team.away.pct)}` : "PCT .000";
 
   renderBars(team);
+  renderDivisionPulse(team);
+  renderLeaderComparison(team);
   renderSummary(team);
   renderTeamControls();
 }
@@ -303,13 +424,13 @@ function handleTeamChipClick(event) {
 
 async function loadStandings() {
   setViewMode("loading");
-  setStatus("Cargando datos…");
+  setStatus("Preparando datos…");
 
   try {
     const apiData = await getStandings();
     state.standings = mapStandings(apiData);
-    state.selectedTeamId = state.standings.leader?.id || state.standings.teams[0]?.id;
-    state.selectedDivision = state.standings.leader?.divisionName || "all";
+    state.selectedDivision = state.standings.divisions[0]?.id || state.standings.teams[0]?.divisionName || "Zona Norte";
+    state.selectedTeamId = getVisibleTeams()[0]?.id || state.standings.leader?.id || state.standings.teams[0]?.id;
 
     renderDivisionToggle();
     renderTeamControls();
@@ -319,13 +440,14 @@ async function loadStandings() {
   } catch (error) {
     console.error(error);
     setViewMode("error");
-    setStatus("Error al cargar", "is-error");
+    setStatus("Datos no disponibles", "is-error");
   }
 }
 
 elements.divisionToggle.addEventListener("click", handleDivisionChange);
 elements.teamSelect.addEventListener("change", handleTeamSelect);
 elements.teamChips.addEventListener("click", handleTeamChipClick);
+elements.divisionPulse.addEventListener("click", handleTeamChipClick);
 elements.retryButton.addEventListener("click", loadStandings);
 
 loadStandings();
