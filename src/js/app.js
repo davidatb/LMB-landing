@@ -8,6 +8,7 @@ import {
   formatSignedNumber,
 } from "./formatters.js";
 import { mapStandings } from "./mappers.js";
+import { getTeamLogo } from "./team-assets.js";
 
 const elements = {
   dataStatus: document.querySelector("#data-status"),
@@ -19,6 +20,7 @@ const elements = {
   teamChips: document.querySelector("#team-chips"),
   teamCard: document.querySelector("#team-card"),
   teamDivision: document.querySelector("#team-division"),
+  teamLogo: document.querySelector("#team-logo"),
   teamName: document.querySelector("#team-name"),
   teamRank: document.querySelector("#team-rank"),
   teamRecord: document.querySelector("#team-record"),
@@ -350,6 +352,8 @@ function renderTeamProfile() {
   state.selectedTeamId = team.id;
 
   elements.teamDivision.textContent = team.divisionName;
+  elements.teamLogo.src = getTeamLogo(team);
+  elements.teamLogo.alt = `Logo de ${team.shortName}`;
   elements.teamName.textContent = team.shortName;
   elements.teamRank.textContent = `${team.divisionRank ? `#${team.divisionRank} división` : "Ranking divisional no disponible"} · ${team.leagueRank ? `#${team.leagueRank} liga` : "ranking liga no disponible"}`;
   elements.teamRecord.textContent = formatRecord(team.wins, team.losses);
