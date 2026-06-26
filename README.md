@@ -6,8 +6,8 @@ El objetivo del entregable es transformar una prueba funcional de datos en una e
 
 ## Demo
 
-* Producción: *agregar URL de Vercel*
-* Repositorio: *agregar URL del repositorio*
+* Producción: *https://lmb-landing-iota.vercel.app/*
+* Figma: *https://www.figma.com/design/F5cqarUaPzulpcqdDlQlx2/Landing-LMB-%7C-Igni?node-id=9-3&t=cyK1ctXsqAD0fVFG-1*
 
 ## Desafío elegido
 
