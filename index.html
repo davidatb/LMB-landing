@@ -1,0 +1,185 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="Ficha visual de resultados, posiciones y estadísticas de equipos LMB 2026."
+    />
+    <title>LMB 2026 · Ficha de equipo</title>
+    <link rel="icon" href="assets/icons/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="src/css/styles.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#team-profile">Saltar al contenido</a>
+
+    <header class="site-header">
+      <div class="site-header__inner layout-shell">
+        <a class="brand" href="./" aria-label="Inicio LMB 2026">
+          <span class="brand__mark" aria-hidden="true"></span>
+          <span class="brand__text">
+            <strong>LMB</strong>
+            <span>Temporada 2026</span>
+          </span>
+        </a>
+
+        <div class="site-header__meta">
+          <span class="site-header__eyebrow">Landing de resultados</span>
+          <span class="site-header__status" id="data-status">Cargando datos…</span>
+        </div>
+      </div>
+    </header>
+
+    <main>
+      <section class="hero layout-shell" aria-labelledby="page-title">
+        <div class="hero__content">
+          <p class="eyebrow">Liga Mexicana de Beisbol</p>
+          <h1 class="hero__title" id="page-title">Ficha visual de equipo</h1>
+          <p class="hero__summary">
+            Explora récord, racha, últimos 10 juegos y rendimiento por contexto con una lectura rápida para fans.
+          </p>
+        </div>
+
+        <div class="hero__panel" aria-label="Resumen del producto">
+          <span class="hero__panel-label">Enfoque</span>
+          <strong>Datos reales · UI editorial · Vanilla JS</strong>
+          <p>Sin frameworks, sin backend y listo para GitHub Pages.</p>
+        </div>
+      </section>
+
+      <section class="controls layout-shell" aria-labelledby="controls-title">
+        <div class="section-heading">
+          <p class="eyebrow">Selecciona un equipo</p>
+          <h2 id="controls-title">División y club</h2>
+        </div>
+
+        <div class="controls__grid">
+          <div class="division-toggle" id="division-toggle" role="tablist" aria-label="Divisiones LMB">
+            <button class="division-toggle__button" type="button" data-division="all" aria-selected="false">
+              Todos
+            </button>
+          </div>
+
+          <label class="team-select" for="team-select">
+            <span class="team-select__label">Equipo</span>
+            <select class="team-select__field" id="team-select" disabled>
+              <option>Cargando equipos…</option>
+            </select>
+          </label>
+        </div>
+
+        <div class="team-chips" id="team-chips" aria-label="Equipos disponibles"></div>
+      </section>
+
+      <section class="profile layout-shell" id="team-profile" aria-live="polite">
+        <div class="profile__loading" id="loading-state">
+          <div class="loader" aria-hidden="true"></div>
+          <p>Cargando posiciones LMB 2026…</p>
+        </div>
+
+        <div class="alert" id="error-state" hidden>
+          <strong>No pudimos cargar los datos.</strong>
+          <p>Revisa tu conexión o intenta recargar la página.</p>
+          <button class="button" type="button" id="retry-button">Reintentar</button>
+        </div>
+
+        <article class="team-card" id="team-card" hidden>
+          <div class="team-card__hero">
+            <div class="team-card__identity">
+              <p class="eyebrow" id="team-division">División</p>
+              <h2 class="team-card__name" id="team-name">Equipo</h2>
+              <p class="team-card__rank" id="team-rank">Posición</p>
+            </div>
+
+            <div class="record-badge" aria-label="Récord del equipo">
+              <span class="record-badge__record" id="team-record">0-0</span>
+              <span class="record-badge__label" id="team-pct">PCT .000</span>
+            </div>
+          </div>
+
+          <div class="team-card__spotlight">
+            <div class="streak-pill" id="team-streak">Racha no disponible</div>
+            <p id="team-context">Datos de temporada regular 2026.</p>
+          </div>
+
+          <div class="stats-grid" aria-label="Métricas principales">
+            <section class="stat-panel stat-panel--featured">
+              <div class="stat-panel__header">
+                <span>Últimos 10</span>
+                <strong id="last-ten-record">0-0</strong>
+              </div>
+              <div class="form-dots" id="last-ten-dots" aria-hidden="true"></div>
+              <p class="stat-panel__note" id="last-ten-note">Balance reciente no disponible.</p>
+            </section>
+
+            <section class="stat-panel">
+              <div class="stat-panel__header">
+                <span>Diferencial de carreras</span>
+                <strong id="run-diff">0</strong>
+              </div>
+              <div class="score-pair">
+                <div>
+                  <span>Anotadas</span>
+                  <strong id="runs-scored">0</strong>
+                </div>
+                <div>
+                  <span>Permitidas</span>
+                  <strong id="runs-allowed">0</strong>
+                </div>
+              </div>
+            </section>
+          </div>
+
+          <div class="split-layout">
+            <section class="matchup-card" aria-labelledby="venue-heading">
+              <div class="section-heading section-heading--compact">
+                <p class="eyebrow">Casa vs visitante</p>
+                <h3 id="venue-heading">Rendimiento por sede</h3>
+              </div>
+
+              <div class="matchup-card__records">
+                <div>
+                  <span>Casa</span>
+                  <strong id="home-record">0-0</strong>
+                  <small id="home-pct">.000</small>
+                </div>
+                <span class="matchup-card__divider">vs</span>
+                <div>
+                  <span>Visitante</span>
+                  <strong id="away-record">0-0</strong>
+                  <small id="away-pct">.000</small>
+                </div>
+              </div>
+            </section>
+
+            <section class="bar-card" aria-labelledby="split-heading">
+              <div class="section-heading section-heading--compact">
+                <p class="eyebrow">Comparativo</p>
+                <h3 id="split-heading">Porcentaje de victorias</h3>
+              </div>
+
+              <div class="bar-list" id="split-bars"></div>
+            </section>
+          </div>
+
+          <section class="table-card" aria-labelledby="summary-heading">
+            <div class="section-heading section-heading--compact">
+              <p class="eyebrow">Resumen</p>
+              <h3 id="summary-heading">Lectura rápida</h3>
+            </div>
+            <dl class="summary-list" id="summary-list"></dl>
+          </section>
+        </article>
+      </section>
+    </main>
+
+    <footer class="site-footer layout-shell">
+      <p>
+        Proyecto estático de evaluación · Datos públicos MLB Stats API · Maquetado con HTML, CSS y JavaScript vanilla.
+      </p>
+    </footer>
+
+    <script type="module" src="src/js/app.js"></script>
+  </body>
+</html>

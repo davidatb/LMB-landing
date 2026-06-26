@@ -1,0 +1,7 @@
+*.zip
+*.patch
+*.diff
+review.diff
+assets/**/*.zip
+dist/
+node_modules/
